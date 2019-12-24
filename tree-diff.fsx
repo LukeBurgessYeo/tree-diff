@@ -15,7 +15,9 @@ type Node<'T> = {
 
 /// Nodes are equal in all but Value
 let (==) node1 node2 =
-    node1.Id = node2.Id && node1.Children = node2.Children && node1.Value <> node2.Value
+    node1.Id = node2.Id 
+    && node1.Children = node2.Children 
+    && node1.Value <> node2.Value
 
 /// Combines the children of two nodes into a single list
 let combine node1 node2 =
@@ -23,17 +25,14 @@ let combine node1 node2 =
     let second = node2.Children |> List.map (fun x -> (node1.Children |> List.tryFind (fun y -> y.Id = x.Id)), Some x)
     first @ second |> List.distinct
 
-let insert node = 
-    { node with 
-        Modified = Inserted
-        Children =
-            node.Children |> List.map (fun child -> { child with Modified = Inserted }) }
+let rec markNode change node =
+    { node with
+        Modified = change
+        Children = node.Children |> List.map (markNode change) }
 
-let delete node =
-    { node with 
-        Modified = Deleted
-        Children =
-            node.Children |> List.map (fun child -> { child with Modified = Deleted }) }
+let insert node = markNode Inserted node
+
+let delete node = markNode Deleted node
 
 let update node value =
     { node with 
@@ -74,7 +73,9 @@ let tree0 = {
     Modified = Unchanged
     Children = [
         { Id = 1; Value = "A"; Modified = Unchanged; Children = [
-            { Id = 3; Value = "D"; Modified = Unchanged; Children = [] }
+            { Id = 3; Value = "D"; Modified = Unchanged; Children = [
+                { Id = 4; Value = "E"; Modified = Unchanged; Children = [] }                
+            ] }
         ] }
         { Id = 2; Value = "B"; Modified = Unchanged; Children = [] }
     ]
